@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#355070">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Spending">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Spending Journal</title>
+<style>
+  :root{
+    --ink:#2b3a42; --muted:#7a8a84; --cream:#fbf6e9; --paper:#fffdf5; --line:#e4dcc3;
+    --navy:#355070; --forest:#3f6b5c; --moss:#84a98c; --sage:#cad2c5; --rust:#c8693a; --sun:#f2c46d; --sky1:#7fb8d8; --sky2:#eaf4d8;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--sky2)}
+  body{margin:0;font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Trebuchet MS",system-ui,sans-serif;color:var(--ink);
+    background:linear-gradient(#cfe6ef 0,var(--sky2) 320px,var(--cream) 600px);min-height:100vh;
+    padding-bottom:calc(60px + env(safe-area-inset-bottom))}
+  h1,h2{font-family:Georgia,"Times New Roman",serif}
+
+  /* ---------- splash ---------- */
+  #splash{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(#5f9cc4,#bfe0ea 55%,#eaf4d8);color:#fff;text-align:center;cursor:pointer;transition:opacity .7s,visibility .7s}
+  #splash.gone{opacity:0;visibility:hidden}
+  #splash h1{font-size:2.2rem;margin:10px 0 4px;text-shadow:0 2px 0 rgba(53,80,112,.35)}
+  #splash p{margin:0;opacity:.95;animation:pulse 1.6s infinite}
+  #splash svg.hills{position:absolute;bottom:0;left:0;width:100%;height:38%}
+  @keyframes pulse{50%{opacity:.35}}
+
+  /* ---------- header ---------- */
+  header{position:relative;overflow:hidden;height:230px;background:linear-gradient(#6aa8cf,#cfe6ef)}
+  .cloud{position:absolute;background:#fff;border-radius:99px;opacity:.9;filter:blur(.3px)}
+  .cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+  .c1{width:110px;height:30px;top:34px;left:-130px;animation:drift 60s linear infinite}
+  .c1::before{width:50px;height:50px;top:-24px;left:18px}.c1::after{width:38px;height:38px;top:-16px;left:56px}
+  .c2{width:80px;height:22px;top:80px;left:-100px;animation:drift 85s linear -30s infinite;opacity:.75}
+  .c2::before{width:36px;height:36px;top:-17px;left:12px}.c2::after{width:28px;height:28px;top:-11px;left:40px}
+  @keyframes drift{to{transform:translateX(calc(100vw + 260px))}}
+  header svg.hills{position:absolute;bottom:-1px;left:0;width:100%;height:110px}
+  .title{position:absolute;top:26px;left:0;right:0;text-align:center;color:#fff}
+  .title h1{margin:0;font-size:1.8rem;text-shadow:0 2px 0 rgba(53,80,112,.4)}
+  .title small{opacity:.95}
+  #mascotBox{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);display:flex;align-items:flex-end;gap:8px}
+  #mascot{width:74px;height:74px;animation:idle 3s ease-in-out infinite}
+  #mascot.hop{animation:hop .5s}
+  @keyframes idle{50%{transform:translateY(-4px)}}
+  @keyframes hop{30%{transform:translateY(-22px) scale(1.05,.95)}60%{transform:translateY(0) scale(1.1,.9)}}
+  #bubble{background:var(--paper);border:2px solid var(--ink);border-radius:14px;padding:6px 11px;font-size:.8rem;font-weight:700;margin-bottom:46px;position:relative;max-width:170px}
+  #bubble::before{content:"";position:absolute;left:-8px;bottom:8px;border:6px solid transparent;border-right-color:var(--ink);border-left:0}
+  #muteBtn{position:absolute;top:12px;right:12px;z-index:5;all:unset;cursor:pointer;background:rgba(255,253,245,.85);width:38px;height:38px;border-radius:50%;text-align:center;line-height:38px;font-size:1.1rem;border:2px solid var(--ink)}
+
+  .wrap{max-width:720px;margin:-6px auto 0;padding:0 14px;position:relative}
+  .card{background:var(--paper);border:2px solid var(--ink);border-radius:18px;padding:18px;margin-bottom:16px;
+    box-shadow:4px 4px 0 var(--ink)}
+  .card h2{margin:0 0 12px;font-size:1.1rem;display:flex;align-items:center;gap:8px}
+  .card h2::after{content:"";flex:1;border-bottom:2px dotted var(--line)}
+
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{border:2px solid var(--ink);border-radius:14px;padding:12px;position:relative}
+  .stat .lbl{font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.75}
+  .stat .num{font-family:Georgia,serif;font-size:1.35rem;font-weight:700;margin-top:2px}
+  .stat .emoji{position:absolute;right:10px;top:8px;font-size:1.3rem}
+  .s1{background:#bcd8c6}.s2{background:#b9cde0}.s3{background:#f4d9a6}.s4{background:#efc3a8}
+  .note{font-size:.75rem;color:var(--muted);margin:10px 0 0}
+
+  form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .full{grid-column:1/-1}
+  label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px}
+  input,select{width:100%;padding:11px 12px;border-radius:12px;border:2px solid var(--ink);font:inherit;font-size:1rem;color:var(--ink);background:#fff;outline:none}
+  input:focus,select:focus{box-shadow:0 0 0 3px var(--sun)}
+  button.primary{font:inherit;font-weight:800;font-size:1rem;color:#fff;background:var(--forest);border:2px solid var(--ink);border-radius:14px;padding:12px 16px;cursor:pointer;
+    box-shadow:0 4px 0 var(--ink);transition:transform .08s,box-shadow .08s;width:100%}
+  button.primary:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--sage);border:2px solid var(--ink);padding:4px 6px 4px 11px;border-radius:999px;font-weight:700;font-size:.88rem}
+  .chip button{all:unset;cursor:pointer;width:20px;height:20px;border-radius:50%;background:var(--paper);border:1.5px solid var(--ink);text-align:center;line-height:17px;font-size:.7rem}
+  .chip button:hover{background:var(--rust);color:#fff}
+  .addcat{display:flex;gap:8px}
+  .addcat input{flex:1}
+  .addcat button{all:unset;cursor:pointer;background:var(--navy);color:#fff;font-weight:800;border:2px solid var(--ink);border-radius:12px;padding:0 16px;box-shadow:0 3px 0 var(--ink)}
+  .addcat button:active{transform:translateY(3px);box-shadow:none}
+
+  .row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-bottom:2px dotted var(--line)}
+  .row:last-child{border-bottom:none}
+  .dot{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:1.2rem;flex:none;border:2px solid var(--ink)}
+  .info{flex:1;min-width:0}
+  .info b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .info small{color:var(--muted)}
+  .amt{font-family:Georgia,serif;font-weight:700}
+  .del{all:unset;cursor:pointer;padding:6px;border-radius:10px;opacity:.6}
+  .del:hover{opacity:1;background:var(--line)}
+  .empty{text-align:center;color:var(--muted);padding:16px 0}
+  .bar{margin:9px 0}
+  .bar .t{display:flex;justify-content:space-between;font-size:.84rem;font-weight:700;margin-bottom:3px}
+  .bar .track{height:14px;background:#efe9d3;border:2px solid var(--ink);border-radius:99px;overflow:hidden}
+  .bar .fill{height:100%}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:8px}
+  .toolbar select{flex:1}
+  .toolbar span{font-family:Georgia,serif;font-weight:700}
+  @media(max-width:480px){form{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <svg width="120" height="120" viewBox="0 0 100 100" aria-hidden="true">
+    <ellipse cx="50" cy="92" rx="26" ry="5" fill="rgba(0,0,0,.15)"/>
+    <circle cx="50" cy="56" r="34" fill="#6f9b78" stroke="#2b3a42" stroke-width="3"/>
+    <path d="M50 22 C42 8 58 2 66 8 C62 18 56 22 50 22Z" fill="#9cc58a" stroke="#2b3a42" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="38" cy="54" r="7" fill="#fff" stroke="#2b3a42" stroke-width="2.5"/><circle cx="62" cy="54" r="7" fill="#fff" stroke="#2b3a42" stroke-width="2.5"/>
+    <circle cx="39.5" cy="55" r="3" fill="#2b3a42"/><circle cx="60.5" cy="55" r="3" fill="#2b3a42"/>
+    <ellipse cx="28" cy="66" rx="5" ry="3" fill="#e9967a" opacity=".7"/><ellipse cx="72" cy="66" rx="5" ry="3" fill="#e9967a" opacity=".7"/>
+    <path d="M44 68 Q50 74 56 68" fill="none" stroke="#2b3a42" stroke-width="2.5" stroke-linecap="round"/>
+  </svg>
+  <h1>Spending Journal</h1>
+  <p>tap anywhere to begin</p>
+  <svg class="hills" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 70 Q80 20 170 60 T400 40 V120 H0Z" fill="#8bb98a"/>
+    <path d="M0 95 Q110 55 220 90 T400 75 V120 H0Z" fill="#5f9a74"/>
+  </svg>
+</div>
+
+<header>
+  <button id="muteBtn" title="Sound on/off">🔊</button>
+  <div class="cloud c1"></div><div class="cloud c2"></div>
+  <div class="title"><h1>Spending Journal</h1><small>every coin has a story</small></div>
+  <div id="mascotBox">
+    <svg id="mascot" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="56" r="34" fill="#6f9b78" stroke="#2b3a42" stroke-width="3"/>
+      <path d="M50 22 C42 8 58 2 66 8 C62 18 56 22 50 22Z" fill="#9cc58a" stroke="#2b3a42" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="38" cy="54" r="7" fill="#fff" stroke="#2b3a42" stroke-width="2.5"/><circle cx="62" cy="54" r="7" fill="#fff" stroke="#2b3a42" stroke-width="2.5"/>
+      <circle cx="39.5" cy="55" r="3" fill="#2b3a42"/><circle cx="60.5" cy="55" r="3" fill="#2b3a42"/>
+      <ellipse cx="28" cy="66" rx="5" ry="3" fill="#e9967a" opacity=".7"/><ellipse cx="72" cy="66" rx="5" ry="3" fill="#e9967a" opacity=".7"/>
+      <path d="M44 68 Q50 74 56 68" fill="none" stroke="#2b3a42" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div id="bubble">Welcome back!</div>
+  </div>
+  <svg class="hills" viewBox="0 0 400 110" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 60 Q80 10 170 50 T400 30 V110 H0Z" fill="#8bb98a"/>
+    <path d="M0 85 Q110 45 220 80 T400 65 V110 H0Z" fill="#5f9a74"/>
+    <path d="M0 100 Q120 75 240 98 T400 90 V110 H0Z" fill="#fbf6e9"/>
+  </svg>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <h2>📊 Averages</h2>
+    <div class="stats">
+      <div class="stat s1"><span class="emoji">☀️</span><div class="lbl">Per day</div><div class="num" id="avgDaily">–</div></div>
+      <div class="stat s2"><span class="emoji">🌙</span><div class="lbl">Per month</div><div class="num" id="avgMonthly">–</div></div>
+      <div class="stat s3"><span class="emoji">🍂</span><div class="lbl">This month</div><div class="num" id="thisMonth">–</div></div>
+      <div class="stat s4"><span class="emoji">📜</span><div class="lbl">All time</div><div class="num" id="totalAll">–</div></div>
+    </div>
+    <p class="note" id="avgNote"></p>
+  </div>
+
+  <div class="card">
+    <h2>✍️ New entry</h2>
+    <form id="form">
+      <div><label>Amount</label><input id="amount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00" required></div>
+      <div><label>Type</label><select id="category" required></select></div>
+      <div><label>Date</label><input id="date" type="date" required></div>
+      <div><label>Note</label><input id="note" type="text" placeholder="optional" maxlength="60"></div>
+      <div class="full"><button class="primary" type="submit">Add to journal</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>🏷️ Types</h2>
+    <div class="chips" id="chips"></div>
+    <div class="addcat">
+      <input id="newCat" type="text" placeholder="New type, e.g. 🐱 Pets" maxlength="24">
+      <button id="addCatBtn" type="button">Add</button>
+    </div>
+    <p class="note">Removing a type keeps your old entries; they keep their label.</p>
+  </div>
+
+  <div class="card">
+    <h2>🌲 Where it went</h2>
+    <div id="breakdown"></div>
+  </div>
+
+  <div class="card">
+    <h2>📖 History</h2>
+    <div class="toolbar"><select id="monthFilter"></select><span id="monthTotal"></span></div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+/* ---------------- sound (synthesized, no files) ---------------- */
+let actx = null;
+let muted = false;
+try{ muted = localStorage.getItem("spend_muted")==="1"; }catch(e){}
+function ensureAudio(){
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==="suspended") actx.resume();
+  }catch(e){}
+}
+function tone(freq, start, dur, type="sine", vol=.18, slideTo){
+  if(!actx || muted) return;
+  const t = actx.currentTime + start;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq,t);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.exponentialRampToValueAtTime(vol,t+.02);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(actx.destination); o.start(t); o.stop(t+dur+.05);
+}
+const sfx = {
+  open(){ [523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,i*.13,.7,"triangle",.16)); tone(261.63,0,1.1,"sine",.1); },
+  coin(){ tone(987.77,0,.09,"square",.08); tone(1318.5,.09,.35,"square",.08); tone(2637,.09,.25,"sine",.05); },
+  pop(){ tone(500,0,.12,"sine",.2,900); },
+  del(){ tone(420,0,.22,"triangle",.18,150); },
+  oops(){ tone(200,0,.15,"sawtooth",.08); }
+};
+function updateMute(){ document.getElementById("muteBtn").textContent = muted ? "🔇" : "🔊"; }
+document.getElementById("muteBtn").onclick = () => {
+  muted = !muted; try{ localStorage.setItem("spend_muted", muted?"1":"0"); }catch(e){}
+  updateMute(); ensureAudio(); if(!muted) sfx.pop();
+};
+updateMute();
+
+/* splash: browsers only allow audio after a tap, so the chime plays on the first tap */
+const splash = document.getElementById("splash");
+function enter(){
+  ensureAudio(); sfx.open();
+  splash.classList.add("gone");
+  say("Welcome back! 🍃");
+}
+splash.addEventListener("pointerdown", enter, {once:true});
+
+/* ---------------- data ---------------- */
+const CUR = "RM ";
+const PALETTE = ["#bcd8c6","#b9cde0","#f4d9a6","#efc3a8","#d6c9e6","#cfe3a8","#e8b9b9","#b7dede"];
+const DEFAULT_CATS = ["🍜 Food","🚌 Transport","🛍️ Shopping","🎮 Fun","🏠 Home","💊 Health","📚 Study"];
+function load(k,f){ try{ const v=JSON.parse(localStorage.getItem(k)); return v ?? f; }catch(e){ return f; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let cats = load("spend_cats", DEFAULT_CATS);
+let items = load("spend_items", []);
+
+const $ = id => document.getElementById(id);
+const money = n => CUR + n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const pad = n => String(n).padStart(2,"0");
+const todayStr = () => { const d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+const parseD = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const colorFor = c => { const all=[...new Set([...cats,...items.map(i=>i.category)])]; return PALETTE[all.indexOf(c)%PALETTE.length]; };
+const emojiOf = c => { const m=c.match(/^\p{Extended_Pictographic}\uFE0F?/u); return m?m[0]:"🪙"; };
+const esc = s => s.replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+
+let sayTimer;
+function say(msg){ $("bubble").textContent = msg; clearTimeout(sayTimer); sayTimer = setTimeout(()=>$("bubble").textContent="Keep it up!",4000); }
+function hop(){ const m=$("mascot"); m.classList.remove("hop"); void m.offsetWidth; m.classList.add("hop"); }
+
+/* ---------------- render ---------------- */
+function renderCats(){
+  $("category").innerHTML = cats.map(c=>`<option>${esc(c)}</option>`).join("");
+  $("chips").innerHTML = cats.length ? cats.map((c,i)=>`<span class="chip">${esc(c)}<button title="Remove" data-i="${i}">✕</button></span>`).join("")
+    : '<span class="empty">No types yet. Add one below.</span>';
+  document.querySelectorAll("#chips button").forEach(b=>b.onclick=()=>{
+    cats.splice(+b.dataset.i,1); save("spend_cats",cats); sfx.del(); renderAll();
+  });
+}
+function renderStats(){
+  const total = items.reduce((s,i)=>s+i.amount,0);
+  $("totalAll").textContent = money(total);
+  const now = new Date(), ym = now.getFullYear()+"-"+pad(now.getMonth()+1);
+  $("thisMonth").textContent = money(items.filter(i=>i.date.startsWith(ym)).reduce((s,i)=>s+i.amount,0));
+  if(!items.length){ $("avgDaily").textContent="–"; $("avgMonthly").textContent="–"; $("avgNote").textContent="Add your first entry to see averages."; return; }
+  const first = items.map(i=>parseD(i.date)).sort((a,b)=>a-b)[0];
+  const t0 = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days = Math.max(1, Math.round((t0-first)/86400000)+1);
+  const months = Math.max(1,(now.getFullYear()-first.getFullYear())*12+now.getMonth()-first.getMonth()+1);
+  $("avgDaily").textContent = money(total/days);
+  $("avgMonthly").textContent = money(total/months);
+  $("avgNote").textContent = `Based on ${days} day${days>1?"s":""} / ${months} month${months>1?"s":""} since your first entry.`;
+}
+function renderBreakdown(list){
+  const by={}; list.forEach(i=>by[i.category]=(by[i.category]||0)+i.amount);
+  const e = Object.entries(by).sort((a,b)=>b[1]-a[1]); const total = e.reduce((s,x)=>s+x[1],0);
+  $("breakdown").innerHTML = e.length ? e.map(([c,v])=>`<div class="bar"><div class="t"><span>${esc(c)}</span><span>${money(v)} · ${Math.round(v/total*100)}%</span></div>
+    <div class="track"><div class="fill" style="width:${v/total*100}%;background:${colorFor(c)}"></div></div></div>`).join("")
+    : '<div class="empty">Nothing yet.</div>';
+}
+function renderMonths(){
+  const months=[...new Set(items.map(i=>i.date.slice(0,7)))].sort().reverse();
+  const cur=$("monthFilter").value||"all";
+  $("monthFilter").innerHTML='<option value="all">All time</option>'+months.map(m=>`<option value="${m}">${parseD(m+"-01").toLocaleString(undefined,{month:"long",year:"numeric"})}</option>`).join("");
+  $("monthFilter").value = (months.includes(cur)||cur==="all")?cur:"all";
+}
+function renderList(){
+  const f=$("monthFilter").value;
+  const list=items.filter(i=>f==="all"||i.date.startsWith(f)).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  $("monthTotal").textContent = money(list.reduce((s,i)=>s+i.amount,0));
+  renderBreakdown(list);
+  $("list").innerHTML = list.length ? list.map(i=>`<div class="row">
+    <div class="dot" style="background:${colorFor(i.category)}">${emojiOf(i.category)}</div>
+    <div class="info"><b>${esc(i.note||i.category)}</b><small>${esc(i.category)} · ${parseD(i.date).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"})}</small></div>
+    <div class="amt">${money(i.amount)}</div><button class="del" title="Delete" data-id="${i.id}">🗑️</button></div>`).join("")
+    : '<div class="empty">No entries here yet.</div>';
+  document.querySelectorAll(".del").forEach(b=>b.onclick=()=>{
+    items=items.filter(i=>i.id!==+b.dataset.id); save("spend_items",items); sfx.del(); say("Removed."); renderAll();
+  });
+}
+function renderAll(){ renderCats(); renderStats(); renderMonths(); renderList(); }
+
+/* ---------------- actions ---------------- */
+$("form").onsubmit = e => {
+  e.preventDefault(); ensureAudio();
+  const amount=parseFloat($("amount").value);
+  if(!(amount>=0)||!$("category").value){ sfx.oops(); return; }
+  items.push({id:Date.now(),amount,category:$("category").value,date:$("date").value,note:$("note").value.trim()});
+  save("spend_items",items); sfx.coin(); hop(); say("Noted! "+money(amount)+" 🍃");
+  $("amount").value=""; $("note").value=""; renderAll();
+};
+function addCat(){
+  ensureAudio(); const v=$("newCat").value.trim();
+  if(!v||cats.includes(v)){ sfx.oops(); return; }
+  cats.push(v); save("spend_cats",cats); $("newCat").value=""; sfx.pop(); renderAll();
+}
+$("addCatBtn").onclick=addCat;
+$("newCat").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addCat(); }});
+$("monthFilter").onchange=renderList;
+$("date").value=todayStr();
+renderAll();
+
+/* ---------------- install as app (PWA) ---------------- */
+function iconPng(size){
+  const c=document.createElement("canvas"); c.width=c.height=size; const x=c.getContext("2d"), s=size/100;
+  x.fillStyle="#355070"; x.fillRect(0,0,size,size);
+  x.fillStyle="#8bb98a"; x.beginPath(); x.ellipse(50*s,105*s,80*s,32*s,0,0,7); x.fill();
+  x.lineWidth=3*s; x.strokeStyle="#2b3a42";
+  x.fillStyle="#6f9b78"; x.beginPath(); x.arc(50*s,56*s,32*s,0,7); x.fill(); x.stroke();
+  x.fillStyle="#9cc58a"; x.beginPath(); x.moveTo(50*s,24*s); x.bezierCurveTo(42*s,10*s,58*s,4*s,66*s,10*s); x.bezierCurveTo(62*s,20*s,56*s,24*s,50*s,24*s); x.fill(); x.stroke();
+  [38,62].forEach(cx=>{ x.fillStyle="#fff"; x.beginPath(); x.arc(cx*s,54*s,7*s,0,7); x.fill(); x.stroke(); x.fillStyle="#2b3a42"; x.beginPath(); x.arc((cx+(cx<50?1.5:-1.5))*s,55*s,3*s,0,7); x.fill(); });
+  x.beginPath(); x.moveTo(44*s,68*s); x.quadraticCurveTo(50*s,74*s,56*s,68*s); x.lineCap="round"; x.stroke();
+  return c.toDataURL("image/png");
+}
+try{
+  const i192=iconPng(192), i512=iconPng(512);
+  const ai=document.createElement("link"); ai.rel="apple-touch-icon"; ai.href=iconPng(180); document.head.appendChild(ai);
+  const fi=document.createElement("link"); fi.rel="icon"; fi.href=i192; document.head.appendChild(fi);
+  const manifest={name:"Spending Journal",short_name:"Spending",start_url:location.href.split("#")[0],display:"standalone",
+    background_color:"#355070",theme_color:"#355070",
+    icons:[{src:i192,sizes:"192x192",type:"image/png",purpose:"any"},{src:i512,sizes:"512x512",type:"image/png",purpose:"any"}]};
+  const ml=document.createElement("link"); ml.rel="manifest";
+  ml.href=URL.createObjectURL(new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"}));
+  document.head.appendChild(ml);
+}catch(e){}
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
